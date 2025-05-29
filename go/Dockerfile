@@ -1,16 +1,18 @@
-FROM golang:1.24.3
+FROM golang:1.24.3 AS builder
 
 WORKDIR /app
 
-COPY go.mod go.sum ./
+COPY . .
 
 RUN go mod download && go mod verify
 
-COPY . .
+RUN mkdir -p build && go build -o build/fizzbuzz
 
-RUN mkdir -p build
-RUN go build -o build/fizzbuzz
+FROM scratch
+
+COPY --from=builder /app/build/fizzbuzz /fizzbuzz
+COPY --from=builder /app/templates /templates
 
 EXPOSE 8080
 
-CMD ["build/fizzbuzz", "serve"]
+CMD ["/fizzbuzz", "serve"]
